@@ -8,7 +8,6 @@
 <style>
     * { box-sizing: border-box; }
 
-    /* Nền thay đổi theo chế độ */
     body {
         margin: 0;
         font-family: "Segoe UI", Arial, sans-serif;
@@ -49,7 +48,7 @@
     button {
         flex: 1;
         padding: 18px;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: bold;
         border: none;
         border-radius: 12px;
@@ -59,7 +58,7 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    #btnIn { background: #27ae60; }
+    #btnIn  { background: #27ae60; }
     #btnOut { background: #e74c3c; }
 
     button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
@@ -67,7 +66,7 @@
     #modeDisplay {
         margin-top: 20px;
         text-align: center;
-        font-size: 26px;
+        font-size: 28px;
         font-weight: bold;
         padding: 20px;
         border-radius: 12px;
@@ -84,39 +83,18 @@
     .mode-out-display { background: linear-gradient(135deg, #e74c3c, #c0392b); border: 5px solid #ffd4d4; }
     .mode-none-display { background: #95a5a6; border: 4px dashed #bdc3c7; }
 
-    /* Lịch sử - thêm cột Chức vụ */
     .history-card { padding: 15px; max-height: 420px; overflow-y: auto; border-radius: 12px; }
-
     .history-card h3 { margin: 0 0 12px 0; font-size: 18px; text-align: center; color: #2c3e50; }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13.5px;
-        table-layout: fixed;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; table-layout: fixed; }
+    th, td { padding: 9px 5px; text-align: center; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4; }
+    th { background: #3498db; color: white; font-size: 13px; font-weight: bold; }
 
-    th, td {
-        padding: 9px 5px;
-        text-align: center;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        line-height: 1.4;
-    }
-
-    th {
-        background: #3498db;
-        color: white;
-        font-size: 13px;
-        font-weight: bold;
-    }
-
-    /* Chia cột mới: Họ tên | Ngày sinh | Chức vụ | Thời gian | Loại */
-    th:nth-child(1), td:nth-child(1) { width: 28%; } /* Họ tên */
-    th:nth-child(2), td:nth-child(2) { width: 18%; } /* Ngày sinh */
-    th:nth-child(3), td:nth-child(3) { width: 20%; } /* Chức vụ - mới */
-    th:nth-child(4), td:nth-child(4) { width: 24%; } /* Thời gian */
-    th:nth-child(5), td:nth-child(5) { width: 10%; } /* Loại */
+    th:nth-child(1), td:nth-child(1) { width: 28%; }
+    th:nth-child(2), td:nth-child(2) { width: 18%; }
+    th:nth-child(3), td:nth-child(3) { width: 20%; }
+    th:nth-child(4), td:nth-child(4) { width: 24%; }
+    th:nth-child(5), td:nth-child(5) { width: 10%; }
 
     td { background: white; border-bottom: 1px solid #eee; }
     tr:hover td { background: #f8f9fa; }
@@ -153,7 +131,7 @@
             <tr>
                 <th>Họ tên</th>
                 <th>Ngày sinh</th>
-                <th>Chức vụ</th>      <!-- Mới thêm -->
+                <th>Chức vụ</th>
                 <th>Thời gian</th>
                 <th>Loại</th>
             </tr>
@@ -177,31 +155,34 @@
     modeDisplay.className = "mode-none-display";
     modeDisplay.innerText = "Chưa chọn chế độ";
 
+    // Nút VÀO
     document.getElementById("btnIn").onclick = () => {
-        currentMode = "Vào làm";
+        currentMode = "Vào";
         body.className = "mode-in";
         modeDisplay.className = "mode-in-display";
-        modeDisplay.innerText = "CHẾ ĐỘ: VÀO LÀM";
-        qrInput.value = ""; qrInput.focus();
+        modeDisplay.innerText = "CHẾ ĐỘ: VÀO";
+        qrInput.value = ""; 
+        qrInput.focus();
     };
 
+    // Nút RA
     document.getElementById("btnOut").onclick = () => {
-        currentMode = "Tan làm";
+        currentMode = "Ra";
         body.className = "mode-out";
         modeDisplay.className = "mode-out-display";
-        modeDisplay.innerText = "CHẾ ĐỘ: TAN LÀM";
-        qrInput.value = ""; qrInput.focus();
+        modeDisplay.innerText = "CHẾ ĐỘ: RA";
+        qrInput.value = ""; 
+        qrInput.focus();
     };
 
-    // Đọc QR: Họ tên, Ngày sinh, Chức vụ
     function parseQR(text) {
         const parts = text.split(",");
-        if (parts.length < 3) return null; // ít nhất 3 phần
+        if (parts.length < 3) return null;
 
         return {
             name: parts[0].trim(),
             birthday: parts[1].trim(),
-            position: parts[2].trim()  // Chức vụ mới
+            position: parts[2].trim()
         };
     }
 
@@ -209,14 +190,14 @@
         const raw = qrInput.value.trim();
 
         if (!currentMode) {
-            alert("Vui lòng chọn chế độ VÀO LÀM hoặc TAN LÀM trước!");
+            alert("Bạn chưa chọn VÀO hay RA!");
             qrInput.value = "";
             return;
         }
 
         const parsed = parseQR(raw);
         if (!parsed) {
-            alert("QR không đúng định dạng!\nCần: Họ tên, Ngày sinh, Chức vụ\nVí dụ: Nguyễn Văn A, 01/01/1990, Trưởng phòng");
+            alert("QR sai định dạng!\nCần: Họ tên, Ngày sinh, Chức vụ");
             qrInput.value = "";
             return;
         }
@@ -228,7 +209,6 @@
         qrInput.focus();
     });
 
-    // Gửi lên Google Sheet (thêm position)
     function sendToGoogle(name, birthday, position, type) {
         const now = new Date().toLocaleString("vi-VN");
         const data = { name, birthday, position, time: now, type };
@@ -241,7 +221,6 @@
         });
     }
 
-    // Hiển thị trong bảng (thêm cột Chức vụ)
     function addLog(name, birthday, position, type) {
         const now = new Date().toLocaleString("vi-VN");
         const row = document.createElement("tr");
