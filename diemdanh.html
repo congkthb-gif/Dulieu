@@ -92,11 +92,12 @@
     .mode-out { background: linear-gradient(135deg, #e74c3c, #c0392b) !important; border: 5px solid #ffd4d4; }
     .mode-none { background: #95a5a6; color: white; border: 4px dashed #bdc3c7; }
 
-    /* ================== PHẦN LỊCH SỬ ĐÃ ĐƯỢC THU NHỎ ĐẸP ================== */
+    /* ====================== LỊCH SỬ CHẤM CÔNG - ĐÃ FIX TRÀN 100% ====================== */
     .history-card { 
         padding: 15px; 
-        max-height: 400px;     /* giới hạn chiều cao */
-        overflow-y: auto;      /* cuộn dọc khi quá nhiều dòng */
+        max-height: 420px;
+        overflow-y: auto;
+        border-radius: 12px;
     }
 
     .history-card h3 {
@@ -109,14 +110,17 @@
     table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 14px;            /* chữ nhỏ lại */
-        table-layout: fixed;        /* cố định độ rộng cột */
+        font-size: 13.5px;
+        table-layout: fixed;           /* Bắt buộc để cố định độ rộng cột */
     }
 
     th, td {
-        padding: 8px 6px;          /* giảm padding */
+        padding: 9px 5px;
         text-align: center;
-        word-wrap: break-word;      /* tự động xuống dòng nếu tên dài */
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.4;
     }
 
     th {
@@ -126,19 +130,24 @@
         font-weight: bold;
     }
 
-    /* Độ rộng cột hợp lý */
-    th:nth-child(1), td:nth-child(1) { width: 35%; } /* Họ tên */
-    th:nth-child(2), td:nth-child(2) { width: 22%; } /* Ngày sinh */
-    th:nth-child(3), td:nth-child(3) { width: 28%; } /* Thời gian */
+    /* Chia cột tối ưu, không bao giờ tràn */
+    th:nth-child(1), td:nth-child(1) { width: 34%; } /* Họ tên */
+    th:nth-child(2), td:nth-child(2) { width: 20%; } /* Ngày sinh */
+    th:nth-child(3), td:nth-child(3) { width: 31%; } /* Thời gian */
     th:nth-child(4), td:nth-child(4) { width: 15%; } /* Loại */
 
-    td { background: white; border-bottom: 1px solid #eee; }
+    td { 
+        background: white; 
+        border-bottom: 1px solid #eee; 
+    }
     tr:hover td { background: #f8f9fa; }
 
-    /* Responsive cho điện thoại */
+    /* Siêu đẹp trên điện thoại nhỏ */
     @media (max-width: 480px) {
-        table { font-size: 13px; }
-        th, td { padding: 6px 4px; }
+        table { font-size: 12.8px; }
+        th, td { padding: 7px 4px; }
+        th:nth-child(1), td:nth-child(1) { width: 37%; }
+        th:nth-child(3), td:nth-child(3) { width: 29%; }
     }
 </style>
 </head>
@@ -156,7 +165,7 @@
         <button id="btnOut">TAN LÀM</button>
     </div>
 
-    <div id="modeDisplay">⚠️ Chưa chọn chế độ</div>
+    <div id="modeDisplay">Chưa chọn chế độ</div>
 </div>
 
 <div class="card history-card">
@@ -181,34 +190,30 @@
 
     let currentMode = "";
 
-    // URL Google Apps Script của bạn
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfGyn2N4rYOtFdGAMpqGDehjf89tmTSHSgwaq7YJmX2b2dj5WUE/exec";
 
-    // Khởi tạo trạng thái ban đầu: chưa chọn chế độ
+    // Khởi tạo ban đầu
     modeDisplay.classList.add("mode-none");
-    modeDisplay.innerText = "⚠️ Chưa chọn chế độ";
+    modeDisplay.innerText = "Chưa chọn chế độ";
 
-     // Nút VÀO LÀM
     document.getElementById("btnIn").onclick = () => {
         currentMode = "Vào làm";
-        modeDisplay.className = ""; // xóa hết class cũ
+        modeDisplay.className = "";
         modeDisplay.classList.add("mode-in");
-        modeDisplay.innerText = "✓ CHẾ ĐỘ: VÀO LÀM";
+        modeDisplay.innerText = "CHẾ ĐỘ: VÀO LÀM";
         qrInput.value = "";
         qrInput.focus();
     };
 
-    // Nút TAN LÀM
     document.getElementById("btnOut").onclick = () => {
         currentMode = "Tan làm";
         modeDisplay.className = "";
         modeDisplay.classList.add("mode-out");
-        modeDisplay.innerText = "✓ CHẾ ĐỘ: TAN LÀM";
+        modeDisplay.innerText = "CHẾ ĐỘ: TAN LÀM";
         qrInput.value = "";
         qrInput.focus();
     };
 
-    // Phân tích dữ liệu QR
     function parseQR(text) {
         const parts = text.split(",");
         if (parts.length < 3) return null;
@@ -218,7 +223,6 @@
         };
     }
 
-    // Khi quét xong (change event của input)
     qrInput.addEventListener("change", () => {
         const raw = qrInput.value.trim();
 
@@ -242,7 +246,6 @@
         qrInput.focus();
     });
 
-    // Gửi lên Google Sheet
     function sendToGoogle(name, birthday, type) {
         const now = new Date().toLocaleString("vi-VN");
         const data = { name, birthday, time: now, type };
@@ -255,7 +258,6 @@
         });
     }
 
-    // Thêm dòng vào bảng lịch sử
     function addLog(name, birthday, type) {
         const now = new Date().toLocaleString("vi-VN");
         const row = document.createElement("tr");
