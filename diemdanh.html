@@ -7,39 +7,37 @@
 <style>
     * {box-sizing:border-box;}
     body {font-family: Arial, sans-serif; margin:0; padding:10px 0; transition:all 0.4s; min-height:100vh;}
-    
-    h1 {font-size:6vw; margin:8px 0; text-align:center; color:white; text-shadow:1px 1px 4px rgba(0,0,0,0.6);}
+    h1 {font-size:7vw; margin:10px 0; text-align:center; color:white; text-shadow:2px 2px 6px rgba(0,0,0,0.6);}
 
-    .buttons {text-align:center; padding:12px 0;}
+    .buttons {text-align:center; padding:15px 0;}
     .btn {
-        width:85%; max-width:360px; margin:10px auto; display:block;
-        padding:18px 0; font-size:6.5vw; font-weight:bold;
-        border:none; border-radius:16px; color:white; cursor:pointer;
-        box-shadow:0 5px 15px rgba(0,0,0,0.3);
+        width:88%; max-width:380px; margin:12px auto; display:block;
+        padding:20px 0; font-size:7.5vw; font-weight:bold;
+        border:none; border-radius:18px; color:white; cursor:pointer;
+        box-shadow:0 6px 18px rgba(0,0,0,0.3);
     }
     .vao {background:#137333;}
     .ra {background:#d93025;}
-    .active {transform:scale(1.05); box-shadow:0 0 30px gold !important;}
+    .active {transform:scale(1.06); box-shadow:0 0 35px gold !important;}
 
     #quet {
-        width:90%; margin:18px auto; display:block; padding:18px;
-        font-size:5.5vw; text-align:center; border-radius:16px;
-        border:3px dashed rgba(255,255,255,0.7); background:rgba(255,255,255,0.18);
+        width:92%; margin:20px auto; display:block; padding:22px;
+        font-size:6vw; text-align:center; border-radius:18px;
+        border:4px dashed rgba(255,255,255,0.7); background:rgba(255,255,255,0.2);
         color:white; caret-color:white;
     }
-    #quet::placeholder {color:rgba(255,255,255,0.6); font-size:5vw;}
+    #quet::placeholder {color:rgba(255,255,255,0.7); font-size:5.5vw;}
 
-    table {width:100%; border-collapse:collapse; font-size:4.2vw; margin-top:10px;} /* ← chữ nhỏ hơn */
-    th, td {padding:8px 4px; text-align:center;}
-    th {background:#1a73e8; color:white; font-size:4.5vw;}
-    td:nth-child(1) {text-align:left; font-weight:bold; font-size:4.6vw;} /* Họ tên */
-    td:nth-child(3), td:nth-child(4) {font-size:4.4vw; color:#333;} /* Giờ vào/ra */
-    .highlight {background:#fff3cd !important;}
-
-    .mode-vao {background:#c0e0c8;}
-    .mode-ra  {background:#f4c0b8;}
-
-    #thongbao {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.85); color:white; padding:20px 40px; font-size:6.5vw; border-radius:16px; display:none; z-index:999;}
+    table {width:100%; border-collapse:collapse; font-size:4.8vw; margin-top:15px;}
+    th, td {padding:10px 6px; text-align:center;}
+    th {background:#1a73e8; color:white; font-size:5vw;}
+    td:nth-child(1) {text-align:left; font-weight:bold; font-size:5.2vw;}
+    .highlight {background:#ffeb3b !important;}
+    
+    .mode-vao {background:#b8d5c4;}
+    .mode-ra  {background:#f4b8b0;}
+    
+    #thongbao {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.85); color:white; padding:25px 45px; font-size:7vw; border-radius:18px; display:none; z-index:999;}
 </style>
 </head>
 <body class="mode-vao">
@@ -73,6 +71,8 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfG
 
 let cheDo = "vao";
 let danhSach = {};
+let lastScan = "";          // ← Chống quét lặp
+let lastTime = 0;           // ← Chống quét lặp trong 1 giây
 
 const input = document.getElementById("quet");
 const btnVao = document.getElementById("btnVao");
@@ -80,7 +80,7 @@ const btnRa = document.getElementById("btnRa");
 const thongbao = document.getElementById("thongbao");
 
 btnVao.onclick = () => { cheDo = "vao"; update(); input.focus(); }
-btnRa.onclick  = () => { cheDo = "ra"; update(); input.focus(); }
+btnRa.onclick = () => { cheDo = "ra"; update(); input.focus(); }
 
 function update() {
     document.body.className = cheDo === "vao" ? "mode-vao" : "mode-ra";
@@ -92,19 +92,25 @@ function layThoiGian() {
     return new Date().toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
-input.addEventListener("input", function() {
+// === CHỐNG LỖI QUÉT TRÊN ĐIỆN THOẠI - ĐOẠN NÀY SIÊU QUAN TRỌNG ===
+input.addEventListener("input", function(e) {
     let raw = this.value.trim();
-    if ((raw.match(/,/g) || []).length >= 2) {
-        xuLy(raw);
-        this.value = "";
-    }
-});
+    
+    // Nếu chưa đủ dấu phẩy → bỏ qua (tránh xử lý nhầm khi đang quét)
+    if ((raw.match(/,/g) || []).length < 2) return;
 
-input.addEventListener("keydown", e => {
-    if (e.key === "Enter" && input.value.trim()) {
-        xuLy(input.value.trim());
-        input.value = "";
+    // Chống quét lặp trong vòng 800ms hoặc dữ liệu giống hệt lần trước
+    let now = Date.now();
+    if (raw === lastScan || now - lastTime < 800) {
+        this.value = "";
+        return;
     }
+
+    lastScan = raw;
+    lastTime = now;
+
+    xuLy(raw);
+    this.value = "";  // Xóa ngay lập tức để tránh bàn phím ảo hiện lên
 });
 
 function xuLy(raw) {
@@ -122,14 +128,15 @@ function xuLy(raw) {
     if (cheDo === "vao") danhSach[key].gioVao = tg;
     else danhSach[key].gioRa = tg;
 
+    // Gửi lên Google Sheet
     fetch(WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify({hoTen, ngaySinh, loai})
-    }).then(() => {
-        thongbao.style.display = "block";
-        setTimeout(() => thongbao.style.display = "none", 800);
     });
+
+    thongbao.style.display = "block";
+    setTimeout(() => thongbao.style.display = "none", 600);
 
     hienThi();
 }
