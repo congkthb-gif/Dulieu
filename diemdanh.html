@@ -8,7 +8,6 @@
     * {box-sizing:border-box;}
     body {font-family: Arial, sans-serif; margin:0; padding:10px 0; transition:all 0.4s; min-height:100vh;}
     h1 {font-size:7vw; margin:10px 0; text-align:center; color:white; text-shadow:2px 2px 6px rgba(0,0,0,0.6);}
-
     .buttons {text-align:center; padding:15px 0;}
     .btn {
         width:88%; max-width:380px; margin:12px auto; display:block;
@@ -19,7 +18,6 @@
     .vao {background:#137333;}
     .ra {background:#d93025;}
     .active {transform:scale(1.06); box-shadow:0 0 35px gold !important;}
-
     #quet {
         width:92%; margin:20px auto; display:block; padding:22px;
         font-size:6vw; text-align:center; border-radius:18px;
@@ -27,16 +25,13 @@
         color:white; caret-color:white;
     }
     #quet::placeholder {color:rgba(255,255,255,0.7); font-size:5.5vw;}
-
     table {width:100%; border-collapse:collapse; font-size:4.8vw; margin-top:15px;}
     th, td {padding:10px 6px; text-align:center;}
     th {background:#1a73e8; color:white; font-size:5vw;}
     td:nth-child(1) {text-align:left; font-weight:bold; font-size:5.2vw;}
     .highlight {background:#ffeb3b !important;}
-    
     .mode-vao {background:#b8d5c4;}
     .mode-ra  {background:#f4b8b0;}
-    
     #thongbao {position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.85); color:white; padding:25px 45px; font-size:7vw; border-radius:18px; display:none; z-index:999;}
 </style>
 </head>
@@ -66,13 +61,13 @@
 </table>
 
 <script>
-// === DÁN URL WEB APP CỦA BẠN VÀO ĐÂY ===
+// === URL WEB APP CỦA BẠN ===
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfGyn2N4rYOtFdGAMpqGDehjf89tmTSHSgwaq7YJmX2b2dj5WUE/exec";
 
 let cheDo = "vao";
 let danhSach = {};
-let buffer = "";            // ← Lưu tạm dữ liệu đang quét
-let lastTime = 0;           // ← Chống quét lặp
+let buffer = "";           // Buffer lưu dữ liệu đang quét
+let timeoutId = null;      // Timeout để chờ quét xong hoàn toàn
 
 const input = document.getElementById("quet");
 const btnVao = document.getElementById("btnVao");
@@ -85,28 +80,25 @@ btnRa.onclick  = () => { cheDo = "ra";  update(); input.focus(); }
 function update() {
     document.body.className = cheDo === "vao" ? "mode-vao" : "mode-ra";
     btnVao.classList.toggle("active", cheDo === "vao");
-    btnRa.classList.toggle("active", cheDo === "ra");
+    btnRa.classList.toggle("active",  cheDo === "ra");
 }
 
 function layThoiGian() {
     return new Date().toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
-// === PHẦN QUAN TRỌNG NHẤT: XỬ LÝ QUÉT SIÊU MƯỢT TRÊN ĐIỆN THOẠI ===
+// === FIX TRIỆT ĐỂ LỖI QUÉT TRÊN ĐIỆN THOẠI ===
 input.addEventListener("input", function(e) {
-    buffer += this.value;     // Gom tất cả ký tự máy quét gửi vào
-    this.value = "";          // Xóa ô ngay để không hiện bàn phím ảo
+    buffer += this.value;
+    this.value = "";                     // Xóa ô ngay để không hiện bàn phím ảo
 
-    // Nếu đã có đủ 2 dấu phẩy → coi như quét xong 1 người
-    if ((buffer.match(/,/g) || []).length >= 2) {
-        let now = Date.now();
-        // Chống quét lặp trong 1 giây
-        if (now - lastTime > 1000) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+        if (buffer.trim() && (buffer.match(/,/g) || []).length >= 2) {
             xuLy(buffer.trim());
-            lastTime = now;
         }
-        buffer = "";  // Xóa buffer để sẵn sàng quét người tiếp
-    }
+        buffer = "";                     // Reset buffer sau khi xử lý
+    }, 350);                         // 350ms là thời gian lý tưởng cho mọi máy quét
 });
 
 function xuLy(raw) {
@@ -121,6 +113,7 @@ function xuLy(raw) {
 
     let key = `${hoTen}|${ngaySinh}`;
     if (!danhSach[key]) danhSach[key] = {hoTen, ngaySinh, gioVao: "", gioRa: ""};
+
     if (cheDo === "vao") danhSach[key].gioVao = tg;
     else danhSach[key].gioRa = tg;
 
