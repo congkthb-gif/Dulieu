@@ -71,8 +71,8 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfG
 
 let cheDo = "vao";
 let danhSach = {};
-let lastScan = "";          // ← Chống quét lặp
-let lastTime = 0;           // ← Chống quét lặp trong 1 giây
+let buffer = "";            // ← Lưu tạm dữ liệu đang quét
+let lastTime = 0;           // ← Chống quét lặp
 
 const input = document.getElementById("quet");
 const btnVao = document.getElementById("btnVao");
@@ -80,7 +80,7 @@ const btnRa = document.getElementById("btnRa");
 const thongbao = document.getElementById("thongbao");
 
 btnVao.onclick = () => { cheDo = "vao"; update(); input.focus(); }
-btnRa.onclick = () => { cheDo = "ra"; update(); input.focus(); }
+btnRa.onclick  = () => { cheDo = "ra";  update(); input.focus(); }
 
 function update() {
     document.body.className = cheDo === "vao" ? "mode-vao" : "mode-ra";
@@ -92,29 +92,25 @@ function layThoiGian() {
     return new Date().toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
-// === CHỐNG LỖI QUÉT TRÊN ĐIỆN THOẠI - ĐOẠN NÀY SIÊU QUAN TRỌNG ===
+// === PHẦN QUAN TRỌNG NHẤT: XỬ LÝ QUÉT SIÊU MƯỢT TRÊN ĐIỆN THOẠI ===
 input.addEventListener("input", function(e) {
-    let raw = this.value.trim();
-    
-    // Nếu chưa đủ dấu phẩy → bỏ qua (tránh xử lý nhầm khi đang quét)
-    if ((raw.match(/,/g) || []).length < 2) return;
+    buffer += this.value;     // Gom tất cả ký tự máy quét gửi vào
+    this.value = "";          // Xóa ô ngay để không hiện bàn phím ảo
 
-    // Chống quét lặp trong vòng 800ms hoặc dữ liệu giống hệt lần trước
-    let now = Date.now();
-    if (raw === lastScan || now - lastTime < 800) {
-        this.value = "";
-        return;
+    // Nếu đã có đủ 2 dấu phẩy → coi như quét xong 1 người
+    if ((buffer.match(/,/g) || []).length >= 2) {
+        let now = Date.now();
+        // Chống quét lặp trong 1 giây
+        if (now - lastTime > 1000) {
+            xuLy(buffer.trim());
+            lastTime = now;
+        }
+        buffer = "";  // Xóa buffer để sẵn sàng quét người tiếp
     }
-
-    lastScan = raw;
-    lastTime = now;
-
-    xuLy(raw);
-    this.value = "";  // Xóa ngay lập tức để tránh bàn phím ảo hiện lên
 });
 
 function xuLy(raw) {
-    let clean = raw.replace(/^\d+\.\s*/, '');
+    let clean = raw.replace(/^\d+\.\s*/, '');  // Bỏ "23. "
     let parts = clean.split(',').map(p => p.trim());
     if (parts.length < 2) return;
 
