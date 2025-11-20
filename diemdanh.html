@@ -9,21 +9,11 @@
     body {font-family: Arial, sans-serif; margin:0; padding:10px 0; transition:all 0.4s; min-height:100vh;}
     h1 {font-size:7vw; margin:10px 0; text-align:center; color:white; text-shadow:2px 2px 6px rgba(0,0,0,0.6);}
     .buttons {text-align:center; padding:15px 0;}
-    .btn {
-        width:88%; max-width:380px; margin:12px auto; display:block;
-        padding:20px 0; font-size:7.5vw; font-weight:bold;
-        border:none; border-radius:18px; color:white; cursor:pointer;
-        box-shadow:0 6px 18px rgba(0,0,0,0.3);
-    }
+    .btn {width:88%; max-width:380px; margin:12px auto; display:block; padding:20px 0; font-size:7.5vw; font-weight:bold; border:none; border-radius:18px; color:white; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.3);}
     .vao {background:#137333;}
     .ra {background:#d93025;}
     .active {transform:scale(1.06); box-shadow:0 0 35px gold !important;}
-    #quet {
-        width:92%; margin:20px auto; display:block; padding:22px;
-        font-size:6vw; text-align:center; border-radius:18px;
-        border:4px dashed rgba(255,255,255,0.7); background:rgba(255,255,255,0.2);
-        color:white; caret-color:white;
-    }
+    #quet {width:92%; margin:20px auto; display:block; padding:22px; font-size:6vw; text-align:center; border-radius:18px; border:4px dashed rgba(255,255,255,0.7); background:rgba(255,255,255,0.2); color:white; caret-color:white;}
     #quet::placeholder {color:rgba(255,255,255,0.7); font-size:5.5vw;}
     table {width:100%; border-collapse:collapse; font-size:4.8vw; margin-top:15px;}
     th, td {padding:10px 6px; text-align:center;}
@@ -66,8 +56,8 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfG
 
 let cheDo = "vao";
 let danhSach = {};
-let buffer = "";           // Buffer lưu dữ liệu đang quét
-let timeoutId = null;      // Timeout để chờ quét xong hoàn toàn
+let buffer = "";
+let timeoutId = null;
 
 const input = document.getElementById("quet");
 const btnVao = document.getElementById("btnVao");
@@ -75,49 +65,71 @@ const btnRa = document.getElementById("btnRa");
 const thongbao = document.getElementById("thongbao");
 
 btnVao.onclick = () => { cheDo = "vao"; update(); input.focus(); }
-btnRa.onclick  = () => { cheDo = "ra";  update(); input.focus(); }
+btnRa.onclick  = () => { cheDo = "ra"; update(); input.focus(); }
 
 function update() {
     document.body.className = cheDo === "vao" ? "mode-vao" : "mode-ra";
     btnVao.classList.toggle("active", cheDo === "vao");
-    btnRa.classList.toggle("active",  cheDo === "ra");
+    btnRa.classList.toggle("active", cheDo === "ra");
+}
+
+// === CHUẨN HÓA TIẾNG VIỆT - FIX LỖI Ũ Ĩ Ì Đ... ===
+function chuanHoaTen(str) {
+    return str
+        .replace(/[ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴ]/g, "A")
+        .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a")
+        .replace(/[ÈÉẸẺẼÊỀẾỆỂỄ]/g, "E")
+        .replace(/[èéẹẻẽêềếệểễ]/g, "e")
+        .replace(/[ÌÍỊỈĨ]/g, "I")
+        .replace(/[ìíịỉĩ]/g, "i")
+        .replace(/[ÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠ]/g, "O")
+        .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o")
+        .replace(/[ÙÚỤỦŨƯỪỨỰỬỮ]/g, "U")
+        .replace(/[ùúụủũưừứựửữ]/g, "u")
+        .replace(/[ỲÝỴỶỸ]/g, "Y")
+        .replace(/[ỳýỵỷỹ]/g, "y")
+        .replace(/[Đ]/g, "D")
+        .replace(/[đ]/g, "d")
+        .replace(/[^A-Za-z0-9\s\/,]/g, '')  // Loại bỏ mọi ký tự lạ còn lại
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 function layThoiGian() {
     return new Date().toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
-// === FIX TRIỆT ĐỂ LỖI QUÉT TRÊN ĐIỆN THOẠI ===
 input.addEventListener("input", function(e) {
     buffer += this.value;
-    this.value = "";                     // Xóa ô ngay để không hiện bàn phím ảo
+    this.value = "";
 
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
         if (buffer.trim() && (buffer.match(/,/g) || []).length >= 2) {
             xuLy(buffer.trim());
         }
-        buffer = "";                     // Reset buffer sau khi xử lý
-    }, 350);                         // 350ms là thời gian lý tưởng cho mọi máy quét
+        buffer = "";
+    }, 350);
 });
 
 function xuLy(raw) {
-    let clean = raw.replace(/^\d+\.\s*/, '');  // Bỏ "23. "
+    let clean = raw.replace(/^\d+\.\s*/, '');
     let parts = clean.split(',').map(p => p.trim());
     if (parts.length < 2) return;
 
-    let hoTen = parts[0].toUpperCase();
-    let ngaySinh = parts[1];
+    // === ÁP DỤNG CHUẨN HÓA TIẾNG VIỆT ===
+    let hoTenRaw = parts[0];
+    let hoTen = chuanHoaTen(hoTenRaw).toUpperCase();  // Chuẩn hóa + in hoa
+    let ngaySinh = parts[1].trim();
+
     let tg = layThoiGian();
     let loai = cheDo === "vao" ? "Vào làm" : "Ra về";
 
     let key = `${hoTen}|${ngaySinh}`;
     if (!danhSach[key]) danhSach[key] = {hoTen, ngaySinh, gioVao: "", gioRa: ""};
-
     if (cheDo === "vao") danhSach[key].gioVao = tg;
     else danhSach[key].gioRa = tg;
 
-    // Gửi lên Google Sheet
     fetch(WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
