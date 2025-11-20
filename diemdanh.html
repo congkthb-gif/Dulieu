@@ -8,21 +8,21 @@
 <style>
     * { box-sizing: border-box; }
 
+    /* Nền thay đổi theo chế độ */
     body {
         margin: 0;
         font-family: "Segoe UI", Arial, sans-serif;
         background: #f5f6fa;
         padding: 15px;
         color: #333;
+        transition: background 0.6s ease;
     }
 
-    h2 {
-        text-align: center;
-        font-size: 24px;
-        margin-bottom: 20px;
-        font-weight: bold;
-        color: #2c3e50;
-    }
+    body.mode-in  { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+    body.mode-out { background: linear-gradient(135deg, #ffebee, #ffcdd2); }
+    body.mode-none { background: #f5f6fa; }
+
+    h2 { text-align: center; font-size: 24px; margin-bottom: 20px; font-weight: bold; color: #2c3e50; }
 
     .card {
         background: white;
@@ -44,11 +44,7 @@
 
     #qrInput:focus { border-color: #4CAF50; }
 
-    .btn-group {
-        display: flex;
-        gap: 12px;
-        margin-top: 15px;
-    }
+    .btn-group { display: flex; gap: 12px; margin-top: 15px; }
 
     button {
         flex: 1;
@@ -66,10 +62,7 @@
     #btnIn { background: #27ae60; }
     #btnOut { background: #e74c3c; }
 
-    button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    }
+    button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
 
     #modeDisplay {
         margin-top: 20px;
@@ -80,7 +73,6 @@
         border-radius: 12px;
         color: white;
         text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-        transition: all 0.4s ease;
         min-height: 70px;
         display: flex;
         align-items: center;
@@ -88,30 +80,20 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.25);
     }
 
-    .mode-in  { background: linear-gradient(135deg, #27ae60, #2ecc71) !important; border: 5px solid #d4f8da; }
-    .mode-out { background: linear-gradient(135deg, #e74c3c, #c0392b) !important; border: 5px solid #ffd4d4; }
-    .mode-none { background: #95a5a6; color: white; border: 4px dashed #bdc3c7; }
+    .mode-in-display  { background: linear-gradient(135deg, #27ae60, #2ecc71); border: 5px solid #d4f8da; }
+    .mode-out-display { background: linear-gradient(135deg, #e74c3c, #c0392b); border: 5px solid #ffd4d4; }
+    .mode-none-display { background: #95a5a6; border: 4px dashed #bdc3c7; }
 
-    /* ====================== LỊCH SỬ CHẤM CÔNG - ĐÃ FIX TRÀN 100% ====================== */
-    .history-card { 
-        padding: 15px; 
-        max-height: 420px;
-        overflow-y: auto;
-        border-radius: 12px;
-    }
+    /* Lịch sử - thêm cột Chức vụ */
+    .history-card { padding: 15px; max-height: 420px; overflow-y: auto; border-radius: 12px; }
 
-    .history-card h3 {
-        margin: 0 0 12px 0;
-        font-size: 18px;
-        text-align: center;
-        color: #2c3e50;
-    }
+    .history-card h3 { margin: 0 0 12px 0; font-size: 18px; text-align: center; color: #2c3e50; }
 
     table {
         width: 100%;
         border-collapse: collapse;
         font-size: 13.5px;
-        table-layout: fixed;           /* Bắt buộc để cố định độ rộng cột */
+        table-layout: fixed;
     }
 
     th, td {
@@ -119,7 +101,6 @@
         text-align: center;
         word-wrap: break-word;
         overflow-wrap: break-word;
-        hyphens: auto;
         line-height: 1.4;
     }
 
@@ -130,29 +111,26 @@
         font-weight: bold;
     }
 
-    /* Chia cột tối ưu, không bao giờ tràn */
-    th:nth-child(1), td:nth-child(1) { width: 34%; } /* Họ tên */
-    th:nth-child(2), td:nth-child(2) { width: 20%; } /* Ngày sinh */
-    th:nth-child(3), td:nth-child(3) { width: 31%; } /* Thời gian */
-    th:nth-child(4), td:nth-child(4) { width: 15%; } /* Loại */
+    /* Chia cột mới: Họ tên | Ngày sinh | Chức vụ | Thời gian | Loại */
+    th:nth-child(1), td:nth-child(1) { width: 28%; } /* Họ tên */
+    th:nth-child(2), td:nth-child(2) { width: 18%; } /* Ngày sinh */
+    th:nth-child(3), td:nth-child(3) { width: 20%; } /* Chức vụ - mới */
+    th:nth-child(4), td:nth-child(4) { width: 24%; } /* Thời gian */
+    th:nth-child(5), td:nth-child(5) { width: 10%; } /* Loại */
 
-    td { 
-        background: white; 
-        border-bottom: 1px solid #eee; 
-    }
+    td { background: white; border-bottom: 1px solid #eee; }
     tr:hover td { background: #f8f9fa; }
 
-    /* Siêu đẹp trên điện thoại nhỏ */
     @media (max-width: 480px) {
-        table { font-size: 12.8px; }
-        th, td { padding: 7px 4px; }
-        th:nth-child(1), td:nth-child(1) { width: 37%; }
-        th:nth-child(3), td:nth-child(3) { width: 29%; }
+        table { font-size: 12.5px; }
+        th, td { padding: 7px 3px; }
+        th:nth-child(1), td:nth-child(1) { width: 30%; }
+        th:nth-child(3), td:nth-child(3) { width: 22%; }
     }
 </style>
 </head>
 
-<body>
+<body class="mode-none">
 
 <h2>HỆ THỐNG CHẤM CÔNG QR</h2>
 
@@ -161,11 +139,11 @@
     <input id="qrInput" placeholder="Đưa mã QR vào máy quét..." autofocus>
 
     <div class="btn-group">
-        <button id="btnIn">VÀO LÀM</button>
-        <button id="btnOut">TAN LÀM</button>
+        <button id="btnIn">VÀO</button>
+        <button id="btnOut">RA</button>
     </div>
 
-    <div id="modeDisplay">Chưa chọn chế độ</div>
+    <div id="modeDisplay" class="mode-none-display">Chưa chọn chế độ</div>
 </div>
 
 <div class="card history-card">
@@ -175,6 +153,7 @@
             <tr>
                 <th>Họ tên</th>
                 <th>Ngày sinh</th>
+                <th>Chức vụ</th>      <!-- Mới thêm -->
                 <th>Thời gian</th>
                 <th>Loại</th>
             </tr>
@@ -187,39 +166,42 @@
     const qrInput = document.getElementById("qrInput");
     const logTable = document.getElementById("logTable");
     const modeDisplay = document.getElementById("modeDisplay");
+    const body = document.body;
 
     let currentMode = "";
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfGyn2N4rYOtFdGAMpqGDehjf89tmTSHSgwaq7YJmX2b2dj5WUE/exec";
 
-    // Khởi tạo ban đầu
-    modeDisplay.classList.add("mode-none");
+    // Khởi tạo
+    body.className = "mode-none";
+    modeDisplay.className = "mode-none-display";
     modeDisplay.innerText = "Chưa chọn chế độ";
 
     document.getElementById("btnIn").onclick = () => {
         currentMode = "Vào làm";
-        modeDisplay.className = "";
-        modeDisplay.classList.add("mode-in");
+        body.className = "mode-in";
+        modeDisplay.className = "mode-in-display";
         modeDisplay.innerText = "CHẾ ĐỘ: VÀO LÀM";
-        qrInput.value = "";
-        qrInput.focus();
+        qrInput.value = ""; qrInput.focus();
     };
 
     document.getElementById("btnOut").onclick = () => {
         currentMode = "Tan làm";
-        modeDisplay.className = "";
-        modeDisplay.classList.add("mode-out");
+        body.className = "mode-out";
+        modeDisplay.className = "mode-out-display";
         modeDisplay.innerText = "CHẾ ĐỘ: TAN LÀM";
-        qrInput.value = "";
-        qrInput.focus();
+        qrInput.value = ""; qrInput.focus();
     };
 
+    // Đọc QR: Họ tên, Ngày sinh, Chức vụ
     function parseQR(text) {
         const parts = text.split(",");
-        if (parts.length < 3) return null;
+        if (parts.length < 3) return null; // ít nhất 3 phần
+
         return {
             name: parts[0].trim(),
-            birthday: parts[1].trim()
+            birthday: parts[1].trim(),
+            position: parts[2].trim()  // Chức vụ mới
         };
     }
 
@@ -234,21 +216,22 @@
 
         const parsed = parseQR(raw);
         if (!parsed) {
-            alert("Không đọc được dữ liệu QR!\nNội dung: " + raw);
+            alert("QR không đúng định dạng!\nCần: Họ tên, Ngày sinh, Chức vụ\nVí dụ: Nguyễn Văn A, 01/01/1990, Trưởng phòng");
             qrInput.value = "";
             return;
         }
 
-        addLog(parsed.name, parsed.birthday, currentMode);
-        sendToGoogle(parsed.name, parsed.birthday, currentMode);
+        addLog(parsed.name, parsed.birthday, parsed.position, currentMode);
+        sendToGoogle(parsed.name, parsed.birthday, parsed.position, currentMode);
 
         qrInput.value = "";
         qrInput.focus();
     });
 
-    function sendToGoogle(name, birthday, type) {
+    // Gửi lên Google Sheet (thêm position)
+    function sendToGoogle(name, birthday, position, type) {
         const now = new Date().toLocaleString("vi-VN");
-        const data = { name, birthday, time: now, type };
+        const data = { name, birthday, position, time: now, type };
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
@@ -258,12 +241,14 @@
         });
     }
 
-    function addLog(name, birthday, type) {
+    // Hiển thị trong bảng (thêm cột Chức vụ)
+    function addLog(name, birthday, position, type) {
         const now = new Date().toLocaleString("vi-VN");
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${name}</td>
             <td>${birthday}</td>
+            <td>${position}</td>
             <td>${now}</td>
             <td><strong>${type}</strong></td>
         `;
