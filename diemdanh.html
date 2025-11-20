@@ -42,9 +42,7 @@
         margin-top: 5px;
     }
 
-    #qrInput:focus {
-        border-color: #4CAF50;
-    }
+    #qrInput:focus { border-color: #4CAF50; }
 
     .btn-group {
         display: flex;
@@ -73,7 +71,6 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     }
 
-    /* Khu vực hiển thị chế độ - siêu nổi bật */
     #modeDisplay {
         margin-top: 20px;
         text-align: center;
@@ -91,37 +88,58 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.25);
     }
 
-    .mode-in {
-        background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
-        border: 5px solid #d4f8da;
+    .mode-in  { background: linear-gradient(135deg, #27ae60, #2ecc71) !important; border: 5px solid #d4f8da; }
+    .mode-out { background: linear-gradient(135deg, #e74c3c, #c0392b) !important; border: 5px solid #ffd4d4; }
+    .mode-none { background: #95a5a6; color: white; border: 4px dashed #bdc3c7; }
+
+    /* ================== PHẦN LỊCH SỬ ĐÃ ĐƯỢC THU NHỎ ĐẸP ================== */
+    .history-card { 
+        padding: 15px; 
+        max-height: 400px;     /* giới hạn chiều cao */
+        overflow-y: auto;      /* cuộn dọc khi quá nhiều dòng */
     }
 
-    .mode-out {
-        background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-        border: 5px solid #ffd4d4;
+    .history-card h3 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        text-align: center;
+        color: #2c3e50;
     }
 
-    .mode-none {
-        background: #95a5a6;
-        color: white;
-        border: 4px dashed #bdc3c7;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;            /* chữ nhỏ lại */
+        table-layout: fixed;        /* cố định độ rộng cột */
     }
 
-    /* Bảng lịch sử */
-    table { width: 100%; border-collapse: collapse; font-size: 16px; }
+    th, td {
+        padding: 8px 6px;          /* giảm padding */
+        text-align: center;
+        word-wrap: break-word;      /* tự động xuống dòng nếu tên dài */
+    }
+
     th {
         background: #3498db;
         color: white;
-        padding: 12px;
-        text-align: center;
+        font-size: 13px;
+        font-weight: bold;
     }
-    td {
-        padding: 12px;
-        background: white;
-        border-bottom: 1px solid #eee;
-        text-align: center;
+
+    /* Độ rộng cột hợp lý */
+    th:nth-child(1), td:nth-child(1) { width: 35%; } /* Họ tên */
+    th:nth-child(2), td:nth-child(2) { width: 22%; } /* Ngày sinh */
+    th:nth-child(3), td:nth-child(3) { width: 28%; } /* Thời gian */
+    th:nth-child(4), td:nth-child(4) { width: 15%; } /* Loại */
+
+    td { background: white; border-bottom: 1px solid #eee; }
+    tr:hover td { background: #f8f9fa; }
+
+    /* Responsive cho điện thoại */
+    @media (max-width: 480px) {
+        table { font-size: 13px; }
+        th, td { padding: 6px 4px; }
     }
-    tr:hover td { background: #f1f1f1; }
 </style>
 </head>
 
@@ -141,7 +159,7 @@
     <div id="modeDisplay">⚠️ Chưa chọn chế độ</div>
 </div>
 
-<div class="card">
+<div class="card history-card">
     <h3>Lịch sử chấm công hôm nay</h3>
     <table>
         <thead>
