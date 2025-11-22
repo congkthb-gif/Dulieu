@@ -147,15 +147,19 @@
     const body = document.body;
 
     let currentMode = "";
-
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJsvpiAZLQ5ZyhiUfGyn2N4rYOtFdGAMpqGDehjf89tmTSHSgwaq7YJmX2b2dj5WUE/exec";
+
+    // ================== THÊM ĐOẠN NÀY ĐỂ CHỐNG QUÉT TRÙNG ==================
+    let lastProcessedQR = "";       // nội dung QR lần trước
+    let lastProcessedTime = 0;      // thời gian xử lý lần trước (timestamp)
+    const DUPLICATE_THRESHOLD = 3000; // 3 giây - điều chỉnh nếu cần (2000 = 2 giây cũng ok)
+    // =====================================================================
 
     // Khởi tạo
     body.className = "mode-none";
     modeDisplay.className = "mode-none-display";
     modeDisplay.innerText = "Chưa chọn chế độ";
 
-    // Nút VÀO
     document.getElementById("btnIn").onclick = () => {
         currentMode = "Vào";
         body.className = "mode-in";
@@ -165,7 +169,6 @@
         qrInput.focus();
     };
 
-    // Nút RA
     document.getElementById("btnOut").onclick = () => {
         currentMode = "Ra";
         body.className = "mode-out";
@@ -178,7 +181,6 @@
     function parseQR(text) {
         const parts = text.split(",");
         if (parts.length < 3) return null;
-
         return {
             name: parts[0].trim(),
             birthday: parts[1].trim(),
@@ -188,6 +190,19 @@
 
     qrInput.addEventListener("change", () => {
         const raw = qrInput.value.trim();
+        const now = Date.now();
+
+        // === CHỐNG QUÉT TRÙNG TRONG VÒNG 3 GIÂY ===
+        if (raw === lastProcessedQR && (now - lastProcessedTime) < DUPLICATE_THRESHOLD) {
+            // Cùng nội dung, quá gần → bỏ qua (máy quét nhạy quá)
+            qrInput.value = "";
+            qrInput.focus();
+            return;
+        }
+        // Cập nhật lần xử lý cuối
+        lastProcessedQR = raw;
+        lastProcessedTime = now;
+        // ===========================================
 
         if (!currentMode) {
             alert("Bạn chưa chọn VÀO hay RA!");
