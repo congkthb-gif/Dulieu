@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chấm Công Di Động</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        .btn-in  { background: linear-gradient(to right, #10B981, #059669); }
+        .btn-out { background: linear-gradient(to right, #F59E0B, #D97706); }
+        .btn-loading { opacity: 0.7; pointer-events: none; cursor: not-allowed; }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen text-gray-100">
+
+    <header class="bg-gray-800 border-b border-gray-700 px-4 py-5">
+        <div class="container mx-auto max-w-md flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white">Chấm Công Di Động</h2>
+            <i data-feather="clock" class="w-7 h-7 text-indigo-400"></i>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-md">
+        <div class="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl shadow-2xl border border-gray-700 p-8">
+
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold text-white">Chấm Công Nhanh</h1>
+                <p class="text-gray-400 mt-2">Bấm nút để chấm công ngay</p>
+            </div>
+
+            <!-- 2 NÚT CHÍNH -->
+            <div class="grid grid-cols-2 gap-6 mb-10">
+                <button id="btnVaoLam" class="btn-in text-white font-bold text-2xl py-10 rounded-2xl shadow-2xl transform transition hover:scale-105 active:scale-95 flex flex-col items-center relative overflow-hidden">
+                    <span id="textVaoLam">
+                        <i data-feather="log-in" class="w-14 h-14 mb-3 inline"></i><br>
+                        VÀO LÀM
+                    </span>
+                    <span id="loadingVaoLam" class="hidden absolute inset-0 flex flex-col items-center justify-center">
+                        <svg class="animate-spin h-12 w-12 text-white mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-lg">Đang chấm...</span>
+                    </span>
+                </button>
+
+                <button id="btnTanLam" class="btn-out text-white font-bold text-2xl py-10 rounded-2xl shadow-2xl transform transition hover:scale-105 active:scale-95 flex flex-col items-center relative overflow-hidden">
+                    <span id="textTanLam">
+                        <i data-feather="log-out" class="w-14 h-14 mb-3 inline"></i><br>
+                        TAN LÀM
+                    </span>
+                    <span id="loadingTanLam" class="hidden absolute inset-0 flex flex-col items-center justify-center">
+                        <svg class="animate-spin h-12 w-12 text-white mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-lg">Đang chấm...</span>
+                    </span>
+                </button>
+            </div>
+
+            <!-- Form nhập thông tin -->
+            <form id="form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Họ và tên</label>
+                    <input type="text" id="fullname" required placeholder="Nguyễn Văn A"
+                        class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Ngày sinh (dd/mm/yyyy)</label>
+                    <input type="text" id="birthdate" required maxlength="10" placeholder="25/12/1990" inputmode="numeric"
+                        class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500">
+                    <p class="text-xs text-gray-500 mt-1">Ví dụ: 25/12/1990</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Phòng ban</label>
+                    <select id="department" required
+                        class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="" disabled selected>Chọn phòng ban</option>
+                        <option value="QLT-PTNTG">QLT-PTNTG</option>
+                        <option value="Kế toán">Kế toán</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal thành công -->
+        <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 px-4">
+            <div class="bg-gray-800 rounded-2xl p-10 max-w-sm w-full text-center border border-gray-700">
+                <div class="w-24 h-24 bg-green-500 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-feather="check" class="w-14 h-14 text-green-400"></i>
+                </div>
+                <h3 class="text-3xl font-bold text-white mb-4">Chấm công thành công!</h3>
+                <p class="text-2xl text-green-400 mb-2" id="modalAction">Vào làm</p>
+                <p class="text-lg text-gray-300" id="modalTime"></p>
+                <button onclick="closeSuccessModal()" class="mt-10 w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg rounded-xl transition transform hover:scale-105">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        feather.replace();
+
+        // THAY LINK WEB APP MỚI SAU KHI DEPLOY
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz28ZBa3kl9-JIiOs7QdCtpCzV_P-4k1CmwBAlFOyoD61RCqkxj-co87A-iwA3-e5YI/exec";
+
+        // Format ngày sinh
+        document.getElementById('birthdate').addEventListener('input', function(e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+            if (v.length >= 6) v = v.slice(0,5) + '/' + v.slice(5,9);
+            e.target.value = v.slice(0,10);
+        });
+
+        function isValidDate(str) {
+            if (!/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return false;
+            const [d, m, y] = str.split('/').map(Number);
+            const date = new Date(y, m-1, d);
+            return date.getDate() === d && date.getMonth() === m-1 && date.getFullYear() === y;
+        }
+
+        function sendData(hanhDong, btnId) {
+            const fullname = document.getElementById('fullname').value.trim();
+            const birthdate = document.getElementById('birthdate').value.trim();
+            const department = document.getElementById('department').value;
+
+            if (!fullname || !birthdate || !department) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+            if (!isValidDate(birthdate)) {
+                alert('Ngày sinh không hợp lệ!\nVui lòng nhập đúng định dạng dd/mm/yyyy');
+                return;
+            }
+
+            const now = new Date();
+
+            // Tách riêng Ngày và Giờ
+            const ngay = now.toLocaleDateString('vi-VN'); // 01/12/2025
+            const gio = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); // 14:30:25
+
+            // Hiển thị loading
+            const textSpan = btnId === 'btnVaoLam' ? 'textVaoLam' : 'textTanLam';
+            const loadingSpan = btnId === 'btnVaoLam' ? 'loadingVaoLam' : 'loadingTanLam';
+            const btn = document.getElementById(btnId);
+
+            document.getElementById(textSpan).classList.add('hidden');
+            document.getElementById(loadingSpan).classList.remove('hidden');
+            btn.classList.add('btn-loading');
+
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    ngay: ngay,
+                    gio: gio,
+                    action: hanhDong,
+                    fullname: fullname,
+                    birthdate: birthdate,
+                    department: department
+                })
+            })
+            .then(() => {
+                document.getElementById('modalAction').textContent = hanhDong;
+                document.getElementById('modalTime').textContent = `${ngay} - ${gio}`;
+                document.getElementById('successModal').classList.remove('hidden');
+                document.getElementById('form').reset();
+
+                setTimeout(() => {
+                    document.getElementById(textSpan).classList.remove('hidden');
+                    document.getElementById(loadingSpan).classList.add('hidden');
+                    btn.classList.remove('btn-loading');
+                }, 800);
+            })
+            .catch(() => {
+                alert('Lỗi kết nối! Vui lòng thử lại.');
+                document.getElementById(textSpan).classList.remove('hidden');
+                document.getElementById(loadingSpan).classList.add('hidden');
+                btn.classList.remove('btn-loading');
+            });
+        }
+
+        document.getElementById('btnVaoLam').onclick = () => sendData('Vào làm', 'btnVaoLam');
+        document.getElementById('btnTanLam').onclick  = () => sendData('Tan làm', 'btnTanLam');
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+        document.getElementById('successModal').onclick = e => e.target === this && closeSuccessModal();
+    </script>
+</body>
+</html>
