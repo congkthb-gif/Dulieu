@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chấm công QR - Hoạt động Offline</title>
+<style>
+    /* Giữ nguyên toàn bộ CSS cũ của bạn */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f5f6fa; padding: 15px; color: #333; transition: background 0.6s ease; }
+    body.mode-in  { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+    body.mode-out { background: linear-gradient(135deg, #ffebee, #ffcdd2); }
+    body.mode-none { background: #f5f6fa; }
+    h2 { text-align: center; font-size: 24px; margin-bottom: 20px; font-weight: bold; color: #2c3e50; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 20px rgba(0,0,0,0.12); margin-bottom: 20px; }
+    #qrInput { width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; outline: none; margin-top: 5px; }
+    #qrInput:focus { border-color: #4CAF50; }
+    .btn-group { display: flex; gap: 12px; margin-top: 15px; }
+    button { flex: 1; padding: 18px; font-size: 22px; font-weight: bold; border: none; border-radius: 12px; color: white; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #btnIn  { background: #27ae60; }
+    #btnOut { background: #e74c3c; }
+    button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    #modeDisplay { margin-top: 20px; text-align: center; font-size: 28px; font-weight: bold; padding: 20px; border-radius: 12px; color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.5); min-height: 70px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(0,0,0,0.25); }
+    .mode-in-display  { background: linear-gradient(135deg, #27ae60, #2ecc71); border: 5px solid #d4f8da; }
+    .mode-out-display { background: linear-gradient(135deg, #e74c3c, #c0392b); border: 5px solid #ffd4d4; }
+    .mode-none-display { background: #95a5a6; border: 4px dashed #bdc3c7; }
+    .offline-notice { background: #e67e22; color: white; padding: 12px; border-radius: 10px; text-align: center; font-weight: bold; margin-bottom: 15px; animation: pulse 2s infinite; }
+    .sync-status { background: #3498db; color: white; padding: 10px; border-radius: 8px; text-align: center; font-size: 15px; margin-top: 10px; }
+    .syncing { background: #f39c12 !important; }
+    .synced { background: #27ae60 !important; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    /* Giữ nguyên phần table CSS cũ */
+    .history-card { padding: 15px; max-height: 420px; overflow-y: auto; border-radius: 12px; }
+    .history-card h3 { margin: 0 0 12px 0; font-size: 18px; text-align: center; color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; table-layout: fixed; }
+    th, td { padding: 9px 5px; text-align: center; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4; }
+    th { background: #3498db; color: white; font-size: 13px; font-weight: bold; }
+    th:nth-child(1), td:nth-child(1) { width: 28%; }
+    th:nth-child(2), td:nth-child(2) { width: 18%; }
+    th:nth-child(3), td:nth-child(3) { width: 20%; }
+    th:nth-child(4), td:nth-child(4) { width: 24%; }
+    th:nth-child(5), td:nth-child(5) { width: 10%; }
+    td { background: white; border-bottom: 1px solid #eee; }
+    tr:hover td { background: #f8f9fa; }
+    @media (max-width: 480px) { table { font-size: 12.5px; } th, td { padding: 7px 3px; } }
+</style>
+</head>
+<body class="mode-none">
+
+<h2>HỆ THỐNG CHẤM CÔNG QR (HOẠT ĐỘNG OFFLINE)</h2>
+
+<div id="offlineNotice" class="offline-notice" style="display:none;">
+    Mất kết nối mạng – Đang lưu offline, sẽ tự động đồng bộ khi có mạng!
+</div>
+
+<div class="card">
+    <label><b>Quét mã QR:</b></label>
+    <input id="qrInput" placeholder="Đưa mã QR vào máy quét..." autofocus>
+
+    <div class="btn-group">
+        <button id="btnIn">VÀO</button>
+        <button id="btnOut">RA</button>
+    </div>
+
+    <div id="modeDisplay" class="mode-none-display">Chưa chọn chế độ</div>
+    
+    <div id="syncStatus" class="sync-status">Đang kiểm tra kết nối...</div>
+</div>
+
+<div class="card history-card">
+    <h3>Lịch sử chấm công hôm nay</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Họ tên</th>
+                <th>Ngày sinh</th>
+                <th>Chức vụ</th>
+                <th>Thời gian</th>
+                <th>Loại</th>
+            </tr>
+        </thead>
+        <tbody id="logTable"></tbody>
+    </table>
+</div>
+
+<script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3EG9btuQ-FfteozOIUsPuz1zvy_7IQGFAzcZAHu6i47vQtNYjsd9yY8ykXF-yBXIR/exec";
+    const qrInput = document.getElementById("qrInput");
+    const logTable = document.getElementById("logTable");
+    const modeDisplay = document.getElementById("modeDisplay");
+    const offlineNotice = document.getElementById("offlineNotice");
+    const syncStatus = document.getElementById("syncStatus");
+    const body = document.body;
+
+    let currentMode = "";
+    let isOnline = navigator.onLine;
+
+    // Anti-duplicate
+    let lastProcessedQR = "";
+    let lastProcessedTime = 0;
+    const DUPLICATE_THRESHOLD = 3000;
+
+    // === LOCAL STORAGE KEY ===
+    const STORAGE_KEY = "qr_attendance_offline_data";
+
+    // Khởi tạo
+    updateOnlineStatus();
+    loadOfflineData();
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+
+    document.getElementById("btnIn").onclick = () => selectMode("Vào", "mode-in", "mode-in-display", "CHẾ ĐỘ: VÀO");
+    document.getElementById("btnOut").onclick = () => selectMode("Ra", "mode-out", "mode-out-display", "CHẾ ĐỘ: RA");
+
+    function selectMode(mode, bodyClass, displayClass, text) {
+        currentMode = mode;
+        body.className = bodyClass;
+        modeDisplay.className = displayClass;
+        modeDisplay.innerText = text;
+        qrInput.value = "";
+        qrInput.focus();
+    }
+
+    function updateOnlineStatus() {
+        isOnline = navigator.onLine;
+        if (isOnline) {
+            offlineNotice.style.display = "none";
+            syncStatus.textContent = "Đã kết nối internet";
+            syncStatus.className = "sync-status synced";
+            syncPendingData(); // Đồng bộ ngay khi có mạng
+        } else {
+            offlineNotice.style.display = "block";
+            syncStatus.textContent = "Offline – Đang lưu tạm";
+            syncStatus.className = "sync-status";
+        }
+    }
+
+    // Lưu dữ liệu offline
+    function saveToLocal(data) {
+        let queue = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        queue.push({ ...data, timestamp: Date.now() });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+        updatePendingCount();
+    }
+
+    // Cập nhật số bản ghi đang chờ
+    function updatePendingCount() {
+        const queue = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (queue.length > 0) {
+            syncStatus.textContent = `Đang chờ đồng bộ: ${queue.length} bản ghi`;
+            syncStatus.className = "sync-status syncing";
+        }
+    }
+
+    // Tải dữ liệu offline lên giao diện
+    function loadOfflineData() {
+        const queue = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        queue.forEach(item => {
+            addLog(item.name, item.birthday, item.position, item.type, item.time);
+        });
+        updatePendingCount();
+    }
+
+    // Đồng bộ khi có mạng
+    async function syncPendingData() {
+        const queue = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (queue.length === 0) return;
+
+        syncStatus.textContent = `Đang đồng bộ ${queue.length} bản ghi...`;
+        syncStatus.className = "sync-status syncing";
+
+        for (let i = 0; i < queue.length; i++) {
+            const item = queue[i];
+            const success = await sendToGoogle(item.name, item.birthday, item.position, item.type, item.time);
+            if (success) {
+                queue.splice(i, 1);
+                i--; // vì mảng đã ngắn lại
+            } else {
+                break; // dừng nếu lỗi mạng lần nữa
+            }
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+        updatePendingCount();
+
+        if (queue.length === 0) {
+            syncStatus.textContent = "Đã đồng bộ xong!";
+            syncStatus.className = "sync-status synced";
+            setTimeout(() => {
+                if (isOnline) syncStatus.textContent = "Đã kết nối internet";
+            }, 3000);
+        }
+    }
+
+    // Gửi lên Google Sheets (trả về true/false)
+    async function sendToGoogle(name, birthday, position, type, time = null) {
+        const sendTime = time || new Date().toLocaleString("vi-VN");
+        const data = { name, birthday, position, time: sendTime, type };
+
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            return true; // no-cors không trả về lỗi, nên coi là thành công
+        } catch (err) {
+            return false;
+        }
+    }
+
+    // Xử lý quét QR
+    qrInput.addEventListener("change", () => {
+        const raw = qrInput.value.trim();
+        const now = Date.now();
+
+        if (raw === lastProcessedQR && (now - lastProcessedTime) < DUPLICATE_THRESHOLD) {
+            qrInput.value = ""; qrInput.focus(); return;
+        }
+        lastProcessedQR = raw; lastProcessedTime = now;
+
+        if (!currentMode) { alert("Chưa chọn VÀO hay RA!"); qrInput.value = ""; return; }
+
+        const parsed = parseQR(raw);
+        if (!parsed) { alert("QR sai định dạng!\nCần: Họ tên, Ngày sinh, Chức vụ"); qrInput.value = ""; return; }
+
+        const nowStr = new Date().toLocaleString("vi-VN");
+        addLog(parsed.name, parsed.birthday, parsed.position, currentMode, nowStr);
+
+        const record = { name: parsed.name, birthday: parsed.birthday, position: parsed.position, type: currentMode, time: nowStr };
+        
+        if (isOnline) {
+            sendToGoogle(parsed.name, parsed.birthday, parsed.position, currentMode, nowStr);
+        } else {
+            saveToLocal(record);
+        }
+
+        qrInput.value = ""; qrInput.focus();
+    });
+
+    function parseQR(text) {
+        const parts = text.split(",");
+        if (parts.length < 3) return null;
+        return { name: parts[0].trim(), birthday: parts[1].trim(), position: parts[2].trim() };
+    }
+
+    function addLog(name, birthday, position, type, time) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${name}</td><td>${birthday}</td><td>${position}</td><td>${time}</td><td><strong>${type}</strong></td>`;
+        logTable.prepend(row);
+    }
+
+    // Tự động thử đồng bộ mỗi 10 giây khi có mạng
+    setInterval(() => { if (isOnline) syncPendingData(); }, 10000);
+</script>
+</body>
+</html>
